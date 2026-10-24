@@ -1,0 +1,57 @@
+# Render Blueprint solo para el backend (el frontend se despliega por separado como sitio estático).
+# Los secretos NO se guardan aquí: `sync: false` hace que Render pida el valor en el panel.
+# El servicio y la base de datos comparten región para que el servicio alcance la base de datos por la red privada.
+services:
+  - type: web
+    name: star-wars-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    region: oregon
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: APP_AUTH_USERNAME
+        sync: false
+      - key: APP_AUTH_PASSWORD
+        sync: false
+      - key: JWT_SECRET_BASE64
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: JWT_ISSUER
+        value: star-wars-api
+      - key: JWT_AUDIENCE
+        value: star-wars-client
+      - key: JWT_TTL_SECONDS
+        value: "900"
+      - key: SWAPI_BASE_URL
+        value: https://www.swapi.tech/api
+      # Trazas de las llamadas a SWAPI: cambiar a DEBUG en el panel y reiniciar el servicio; volver a INFO para apagarlas.
+      - key: SWAPI_LOG_LEVEL
+        value: INFO
+      - key: APP_LOG_LEVEL
+        value: INFO
+      # La aplicación construye la URL JDBC a partir de DB_HOST, DB_PORT (por defecto 5432) y DB_NAME.
+      # Los Blueprints no pueden referenciar el host de una base de datos, por eso DB_HOST se ingresa una sola vez en el panel:
+      # el hostname interno que aparece en el panel "Connections" de la base de datos (dpg-...-a).
+      - key: DB_HOST
+        sync: false
+      - key: DB_NAME
+        fromDatabase:
+          name: star-wars-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: star-wars-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: star-wars-db
+          property: password
+
+databases:
+  - name: star-wars-db
+    plan: free
+    region: oregon
+    postgresMajorVersion: "17"

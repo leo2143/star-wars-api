@@ -1,0 +1,15 @@
+target/
+.git/
+.gitignore
+.gitattributes
+.idea/
+.vscode/
+.atl/
+mvnw.cmd
+.env
+.env.*
+*.md
+docs/
+Dockerfile
+.dockerignore
+render.yaml
